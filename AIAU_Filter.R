@@ -4,7 +4,6 @@ library(tm) #text mining package
 #Google_raw: final_google_combined_raw ; 957 observations
 #create a df_test subset for manipulating the dataset while keeping the original version 
 df_test <- Google_raw
-View(Google_raw)
 
 #Part.1. Pre-processing
 #location: transform the current version into (1) city, (2) state, (3) country
@@ -193,8 +192,21 @@ Google_description_founder <- checking %>%
 filter_founder <- rbind(Google_jobTitle_founder,Google_jobTitle2_founder,Google_description_founder)
 filter_founder <- filter_founder[!duplicated(filter_founder$fullName),]
 
+#Filter people with business development in jobTitle
+Google_jobTitle_bd <- checking %>%
+  filter(str_detect(str_to_lower(jobTitle),"business"))
+#Filter people with entrepreneur in jobTitle2
+Google_jobTitle2_bd <- checking %>%
+  filter(str_detect(str_to_lower(jobTitle2),"business"))
+#Filter people with entrepreneur in description
+Google_description_bd <- checking %>%
+  filter(str_detect(str_to_lower(description),"business"))
+#Combine the entrepreneur list
+filter_bd <- rbind(Google_jobTitle_bd,Google_jobTitle2_bd,Google_description_bd)
+filter_bd <- filter_bd[!duplicated(filter_bd$fullName),]
+
 ##Combine the final list
-filter_final <- rbind(filter_startup,filter_venture,filter_investor,filter_entrepreneur,filter_founder)
+filter_final <- rbind(filter_startup,filter_venture,filter_investor,filter_entrepreneur,filter_founder,filter_bd)
 filter_final <- filter_final[!duplicated(filter_final$fullName),]
 
 #Scanning people working at Google with the "present" in the jobDateRange & jobDateRange2
@@ -206,14 +218,15 @@ df_filter <- filter_final_1 %>%
 #removing the data with c('intern','Recruit','Stud','Desig' key word ; 
 #1: people with intern or data title
 #0: people without intern or data title
-abc <- ifelse(grepl("Talent|Recruit|Stud|Engine|Desig",df_filter$jobTitle),1,0)
+abc <- ifelse(grepl("Talent|Recruit|Stud|Engine|Desig|HR|Human|People|Staffi|Marketing|Intern|Financ|research|UX",df_filter$jobTitle),1,0)
 testing <- cbind(abc,df_filter)
 #create the new subset that removes the people with intern or data title 
 df_filter <- subset(testing,abc == 0)
 select(df_filter,-abc)
 df_filter = subset(df_filter, select = -c(abc)) %>%
   data.frame()
-colnames(df_filter)
+View(df_filter)
+
 #final version: 52 observations
 #export csv file
 write.csv(df_filter,"Desktop\\Google.filter.final.csv", row.names = FALSE)
